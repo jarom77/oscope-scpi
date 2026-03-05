@@ -120,6 +120,30 @@ class Keysight(Oscilloscope):
         sleep(0.1)
         self._instWrite('SINGLE')
 
+    def trigger_edge(self, source=None, slope="POSitive", sweep_auto=True):
+        """ Set Oscilloscope Basic Edge Trigger """
+        # args:
+        #   source:     supports analog channels, AUX, and LINE. Default: current channel
+        #   slope:      POSitive, NEGative, EITHer
+        #   sweep_auto: True for AUTO, else TRIGgered (SINGle is deprecated)
+
+        trig_chan = source
+        if source is None:
+            trig_chan = self._curr_chan
+        elif source is int:
+            trig_chan = f'CHANnel{source}'
+        # set source
+        self._instWrite(f'TRIGger:EDGE:SOURce {trig_chan}')
+
+        # set slope
+        self._instWrite(f'TRIGger:EDGE:SLOPe {slope}')
+
+        if sweep_auto:
+            sweep = 'AUTO'
+        else:
+            sweep = 'TRIGgered'
+        # set sweep
+        self._instWrite(f'TRIGger:SWEep {sweep}')
         
     def annotate(self, text, color=None, background='TRAN'):
         """ Add an annotation with text, color and background to screen
