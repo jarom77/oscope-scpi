@@ -120,23 +120,62 @@ class Keysight(Oscilloscope):
         sleep(0.1)
         self._instWrite('SINGLE')
 
-    def trigger_edge(self, source=None, slope="POSitive", sweep_auto=True):
+    def set_time_range(self, position, trange=1e-6, scale=None, reference='CENTer'):
+        """ Set Oscilloscope time axis """
+        # args:
+        #   position:   set time interval between trigger and delay reference
+        #   reference:  
+
+        self._instWrite(f'TIMebase:POSition {position}')
+        if scale is None:
+            self._instWrite(f'TIMebase:RANGe {trange}')
+        else:
+            self._instWrite(f'TIMebase:SCALe {scale}')
+
+        if isinstance(reference, int):
+            self._instWrite(f'TIMebase:REFerence:PERCent {reference}')
+        else:
+            self._instWrite(f'TIMebase:REFerence {reference}')
+
+    def set_display(self, scale, offset=0, channel=None, vrange=None):
+        """ Set y-axis for channel """
+        if channel is None:
+            channel = self._curr_chan
+        if vrange is None:
+            self._instWrite(f'CHANnel{channel}:SCALe {scale}')
+        else:
+            self._instWrite(f'CHANnel{channel}:RANGe {vrange}')
+
+        self._instWrite(f'CHANnel{channel}:OFFSet {offset}')
+
+    def trigger_edge(self, source=None, level=0.0, slope="POSitive", sweep_auto=True, term=''):
         """ Set Oscilloscope Basic Edge Trigger """
         # args:
         #   source:     supports analog channels, AUX, and LINE. Default: current channel
+        #   level:      voltage of trigger level. `None` for 50%.
         #   slope:      POSitive, NEGative, EITHer
         #   sweep_auto: True for AUTO, else TRIGgered (SINGle is deprecated)
+
+        if term == '':
+            self._instWrite('TRIGger:MODE EDGE')
+        else: self._instWrite('TRIGger:MODE SEQuence')
 
         trig_chan = source
         if source is None:
             trig_chan = self._curr_chan
-        elif source is int:
+        elif isinstance(source, int):
             trig_chan = f'CHANnel{source}'
         # set source
-        self._instWrite(f'TRIGger:EDGE:SOURce {trig_chan}')
+        self._instWrite(f'TRIGger:EDGE{term}:SOURce {trig_chan}')
+
+        # set level
+        if level is None:
+            self._instWrite('TRIGger:LEVel:FIFTy')
+        else:
+            self._instWrite(f'TRIGger:LEVel {trig_chan},{level}')
 
         # set slope
-        self._instWrite(f'TRIGger:EDGE:SLOPe {slope}')
+        self._instWrite(f'TRIGger:EDGE{term}:SLOPe {slope}')
 
         if sweep_auto:
             sweep = 'AUTO'
