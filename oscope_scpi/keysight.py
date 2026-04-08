@@ -303,8 +303,6 @@ class Keysight(Oscilloscope):
         # Create array for meta data
         meta = []
         
-        # Set the waveform source.
-        self._instWrite("WAVeform:SOURce {}".format(self.channelStr(channel)))
         wav_source = self._instQuery("WAVeform:SOURce?")
 
         # Get the waveform view.
@@ -603,8 +601,6 @@ class Keysight(Oscilloscope):
         # Create array for meta data
         meta = []
 
-        # Set the waveform source.
-        self._instWrite("WAVeform:SOURce {}".format(self.channelStr(channel)))
         wav_source = self._instQuery("WAVeform:SOURce?")
 
         # Get the waveform view.
@@ -770,7 +766,7 @@ class Keysight(Oscilloscope):
     def waveformData(self, channel=None, points=None):
         """ Download waveform data of a selected channel
 
-        channel  - channel, as string, to be measured - set to None to use the default channel
+        channel  - channel to be measured - set to None to use the default channel
 
         points   - number of points to capture - if None, captures all available points
                    for newer devices, the captured points are centered around the center of the display
@@ -786,18 +782,23 @@ class Keysight(Oscilloscope):
         if type(self.channel) is list or type(channel) is list:
             raise ValueError('Channel cannot be a list for WAVEFORM!')
 
+        chan_str = self.channelStr(self.channel)
         # Check channel value
-        if (self.channel not in self.chanAllValidList):
-            raise ValueError('INVALID Channel Value for WAVEFORM: {}  SKIPPING!'.format(self.channel))            
+        if (chan_str not in self.chanAllValidList):
+            raise ValueError('INVALID Channel Value for WAVEFORM: {}  SKIPPING!'.format(chan_str))
+
+        # Set the waveform source.
+        self._instWrite("WAVeform:SOURce {}".format(chan_str))
+
         # Check for data
         complete = int(self._instQuery('WAV:COMP?')) # get percent complete
         if complete == 0:
             raise BufferError('No waveform data')
         
         if (self._version > self._versionLegacy):
-            (x, y, header, meta) = self._waveformDataNew(self.channel, points)
+            (x, y, header, meta) = self._waveformDataNew(chan_str, points)
         else:
-            (x, y, header, meta) = self._waveformDataLegacy(self.channel, points)        
+            (x, y, header, meta) = self._waveformDataLegacy(chan_str, points)
 
         return (x, y, header, meta)
         
