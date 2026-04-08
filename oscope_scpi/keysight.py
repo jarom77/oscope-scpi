@@ -791,7 +791,7 @@ class Keysight(Oscilloscope):
         self._instWrite("WAVeform:SOURce {}".format(chan_str))
 
         # Check for data
-        complete = int(self._instQuery('WAV:COMP?')) # get percent complete
+        complete = int(self._instQuery('WAVeform:COMPlete?')) # get percent complete
         if complete == 0:
             raise BufferError('No waveform data')
         
