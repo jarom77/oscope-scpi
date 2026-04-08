@@ -789,7 +789,10 @@ class Keysight(Oscilloscope):
         # Check channel value
         if (self.channel not in self.chanAllValidList):
             raise ValueError('INVALID Channel Value for WAVEFORM: {}  SKIPPING!'.format(self.channel))            
-
+        # Check for data
+        complete = int(self._instQuery('WAV:COMP?')) # get percent complete
+        if complete == 0:
+            raise BufferError('No waveform data')
         
         if (self._version > self._versionLegacy):
             (x, y, header, meta) = self._waveformDataNew(self.channel, points)
